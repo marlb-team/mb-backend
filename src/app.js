@@ -1,5 +1,6 @@
 import 'dotenv/config'
 
+import bodyParse from 'body-parser'
 import cors from 'cors'
 import express from 'express'
 import Fawn from 'fawn'
@@ -21,6 +22,7 @@ class App {
 
   middlewares() {
     this.express.use(express.json())
+    this.express.use(bodyParse.json())
     this.express.use(helmet())
     this.express.use(cors())
     this.express.use(express())

@@ -6,7 +6,7 @@ class SessionController {
       const { cpf, password } = req.body
 
       const user = await User.findOne({ cpf })
-      const token = user.generateToken()
+      // const token = user.generateToken()
 
       if (!user) {
         res.status(400).json({ message: 'Usuário não encontrado' })
@@ -16,7 +16,7 @@ class SessionController {
         return res.status(400).json({ message: 'senha inválida' })
       }
 
-      return res.json({ user, token })
+      return res.json({ user, token: user.generateToken(user) })
     } catch (error) {
       return res.status(500).json({ message: error.message })
     }
