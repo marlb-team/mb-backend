@@ -1,29 +1,43 @@
-import User from '../models/user'
+import User from '../database/schemas/clientSchema'
 
 class ClientController {
   // @route GET admin/user
   // @desc Returns all users
   // @access Public
   async index(req, res) {
-    const users = await User.find({})
+    const filter = {}
+
+    if (req.query.accountNumber) {
+      filter.accountNumber = new RegExp(req.query.accountNumber, 'i')
+    }
+
+    const users = await User.paginate(
+      filter,
+      {},
+      {
+        page: req.query.page || 1,
+        limeit: 10,
+        populate: 'Account',
+        sort: '-createdAt',
+      }
+    )
     res.status(200).json({ users })
   }
 
   // @route GET api/clients/{id}
   // @desc Returns a specific user
   // @access Public
-  async findById(req, res) {
+  async show(req, res) {
     try {
-      const id = req.params.id
+      // const client = req.params.id
+      const client = await User.findById(req.params.id)
 
-      const user = await User.findById(id)
+      if (!client)
+        return res.status(400).json({ message: 'Usuário não encontrado' })
 
-      if (!user)
-        return res.status(401).json({ message: 'Usuário não encontrado' })
-
-      res.status(200).json({ user })
+      return res.json(client)
     } catch (error) {
-      res.status(500).json({ message: error.message })
+      return res.status(500).json({ message: error.message })
     }
   }
 
@@ -32,13 +46,14 @@ class ClientController {
   // @access Public
   async findByCpf(req, res) {
     try {
-      const cpf = req.params.cpf
-      const user = await User.findById(cpf)
+      // const cpf = req.params.cpf
+      const { cpf } = await User.findById(req.params.id)
 
-      if (!user)
+      // const { cpf } = userCpf
+      if (!cpf)
         return res.status(400).json({ message: 'Usuário não encontrado' })
 
-      return res.json({ user })
+      return res.json({ cpf })
     } catch (error) {
       return res.status(500).json({ message: error.message })
     }

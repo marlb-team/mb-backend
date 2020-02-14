@@ -35,6 +35,7 @@ const UserSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+      min: 6,
       max: 100,
     },
 
@@ -42,14 +43,16 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    resetPasswordToken: {
-      type: String,
-      required: false,
-    },
-    resetPasswordExpires: {
-      type: Date,
-      required: false,
-    },
+    // resetPasswordToken: {
+    //   type: String,
+    //   required: false,
+    // },
+    // resetPasswordExpires: {
+    //   type: Date,
+    //   required: false,
+    // },
+
+    accounts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Account' }],
     // address: {
 
     // },
@@ -58,13 +61,13 @@ const UserSchema = new mongoose.Schema(
       default: Date.now,
     },
 
-    agencyNumber: { type: Number, required: true, default: 101 },
-    accountNumber: {
-      type: Number,
-      required: true,
-      // default: this.generateAccountNumber(),
-    },
-    balance: { type: Number, required: true, default: 2000 },
+    // agencyNumber: { type: Number, required: true, default: 101 },
+    // accountNumber: {
+    //   type: Number,
+    //   required: true,
+    //   // default: this.generateAccountNumber(),
+    // },
+    // balance: { type: Number, required: true, default: 2000 },
   },
   {
     timestamps: true,
@@ -77,28 +80,16 @@ UserSchema.pre('save', function(next) {
   if (!user.isModified('password')) return next()
 
   try {
-    bcrypt
-      .genSalt(HASH_SALT, function(err, salt) {
+    bcrypt.genSalt(HASH_SALT, function(err, salt) {
+      if (err) return next(err)
+
+      bcrypt.hash(user.password, salt, function(err, hash) {
         if (err) return next(err)
 
-        bcrypt.hash(user.password, salt, function(err, hash) {
-          if (err) return next(err)
-
-          user.password = hash
-          next()
-        })
-      })
-      .then(function(next) {
-        if (!user.isModified('accountNumber')) return next()
-        const nuwAccountNumber = this.generateAccountNumber()
-
-        user.accountNumber = nuwAccountNumber
-
-        console.log('user.A:', user.accountNumber)
-        console.log('============================')
-        console.log('newsAN:', nuwAccountNumber)
+        user.password = hash
         next()
       })
+    })
   } catch (error) {
     return console.log(error)
   }
@@ -109,12 +100,12 @@ UserSchema.methods = {
     return bcrypt.compare(password, this.password)
   },
 
-  generateToken() {
-    let payload = {
-      id: this._id,
-      cpf: this.cpf,
-    }
-    return JWT.sign({ payload }, process.env.APP_JWT_SECRET, {
+  generateToken({ id }) {
+    // let payload = {
+    //   id: this._id,
+    //   cpf: this.cpf,
+    // }
+    return JWT.sign({ id }, process.env.APP_JWT_SECRET, {
       expiresIn: process.env.APP_TTL,
     })
   },

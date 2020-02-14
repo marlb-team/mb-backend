@@ -1,29 +1,79 @@
 import User from '../database/schemas/clientSchema'
-import { evioDeEmail } from '../helpers/sendEmail'
+import { Account, Transaction } from '../database/schemas/transactionSchema'
 
 class ClientsController {
   // @route POST api/client/create
   // @desc Create Client
   // @access Public
+
+  async transferencia(req, res) {
+    try {
+      const { value, transferAccount, destinatinAccount } = req.body
+
+      const { number, agency, balance, user, transactions } = Account
+
+      const transf = await Transaction.create({
+        value,
+        transferAccount: req.userId,
+        destinatinAccount,
+      })
+
+      await Promise.all(
+        transactions.map(async transfer => {
+          const newTransaction = new Transaction({
+            ...transfer,
+            transferAccount: transf._id,
+          })
+
+          await newTransaction.save()
+          transf.transactions.push(newTransaction)
+        })
+      )
+
+      await transf.save()
+
+      return res.send({ transf })
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message })
+    }
+  }
+
   async create(req, res) {
     try {
-      const { cpf } = req.body
-      // const createUsers = req.body;
+      const {
+        name,
+        celPhone,
+        preferedName,
+        email,
+        cpf,
+        password,
+        accounts,
+      } = req.body
 
-      if (await User.findOne({ cpf })) {
-        return res
-          .status(400)
-          .json({ error: 'Este CPF já esta associado a uma conta' })
-      }
+      const { number, agency, balance, user } = Account
 
-      const newUser = new User({ ...req.body })
+      const client = await User.create({
+        name,
+        celPhone,
+        preferedName,
+        email,
+        cpf,
+        password,
+        accounts: req.userId,
+      })
 
-      const user_ = await newUser.save()
-      // const user = await User.save({ ...createUsers });
+      await Promise.all(
+        accounts.map(async account => {
+          const clientAccount = new Account({ ...account, user: client._id })
 
-      // return res.json(user);
+          await clientAccount.save()
+          client.accounts.push(clientAccount)
+        })
+      )
 
-      evioDeEmail(user_, req, res)
+      await client.save()
+
+      return res.send({ client })
     } catch (error) {
       res.status(500).json({ success: false, message: error.message })
     }
@@ -40,7 +90,7 @@ class ClientsController {
 
       if (!user)
         return res.status(401).json({
-          msg: 'O CPF ' + cfp + ' Não esta associado a nunhuma conta.',
+          msg: 'O CPF ' + cpf + ' Não esta associado a nunhuma conta.',
         })
 
       //validate password
@@ -57,7 +107,7 @@ class ClientsController {
         })
 
       // Login successful, write token, and send back user
-      res.status(200).json({ token: user.generateToken(), user: user })
+      res.status(200).json({ token: user.generateToken(user), user: user })
     } catch (error) {
       res.status(500).json({ message: error.message })
     }
