@@ -1,5 +1,7 @@
 import { Router } from 'express'
 
+import authController from '../controllers/authController'
+
 const clientRoute = new Router()
 
 clientRoute.get('/clients', (req, res) => {
@@ -7,8 +9,9 @@ clientRoute.get('/clients', (req, res) => {
 })
 
 clientRoute.get('/api/clients', authController.index)
+clientRoute.get('/api/clients/login', authController.login)
+
 clientRoute.post('/api/clients/create', authController.create)
 clientRoute.post('/api/clients/login', authController.login)
-clientRoute.get('/api/clients/login', authController.login)
 
 export default clientRoute
