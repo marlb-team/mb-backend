@@ -59,7 +59,11 @@ const UserSchema = new mongoose.Schema(
     },
 
     agencyNumber: { type: Number, required: true, default: 101 },
-    accountNumber: { type: Number, required: true, default: 9999 },
+    accountNumber: {
+      type: Number,
+      required: true,
+      // default: this.generateAccountNumber(),
+    },
     balance: { type: Number, required: true, default: 2000 },
   },
   {
@@ -73,16 +77,28 @@ UserSchema.pre('save', function(next) {
   if (!user.isModified('password')) return next()
 
   try {
-    bcrypt.genSalt(HASH_SALT, function(err, salt) {
-      if (err) return next(err)
-
-      bcrypt.hash(user.password, salt, function(err, hash) {
+    bcrypt
+      .genSalt(HASH_SALT, function(err, salt) {
         if (err) return next(err)
 
-        user.password = hash
+        bcrypt.hash(user.password, salt, function(err, hash) {
+          if (err) return next(err)
+
+          user.password = hash
+          next()
+        })
+      })
+      .then(function(next) {
+        if (!user.isModified('accountNumber')) return next()
+        const nuwAccountNumber = this.generateAccountNumber()
+
+        user.accountNumber = nuwAccountNumber
+
+        console.log('user.A:', user.accountNumber)
+        console.log('============================')
+        console.log('newsAN:', nuwAccountNumber)
         next()
       })
-    })
   } catch (error) {
     return console.log(error)
   }
@@ -105,7 +121,7 @@ UserSchema.methods = {
 
   generatePasswordReset() {
     this.resetPasswordToken = crypto.randomBytes(20).toString('hex')
-    this.resetPasswordExpires = Date.now() + 3600000 //expire in 1h
+    this.resetPasswordExpires = Date.now() + 3600900 //expire in 1h
   },
 
   generateVerificationToken() {
@@ -115,6 +131,10 @@ UserSchema.methods = {
     }
 
     return new Token(payload)
+  },
+
+  generateAccountNumber() {
+    return Math.floor(Math.random() * 100000890000) - 1000
   },
 }
 
