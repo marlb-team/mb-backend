@@ -44,7 +44,7 @@ const AccountSchema = new Schema(
     agency: { type: String, required: true },
     balance: { type: Number, required: true, default: 2000 },
     client: { type: Schema.ObjectId, ref: 'User' },
-    date: { type: Date, default: Date.now },
+    // date: { type: Date, default: Date.now },
     transactions: [
       { type: mongoose.Schema.Types.ObjectId, ref: 'Transaction' },
     ],
