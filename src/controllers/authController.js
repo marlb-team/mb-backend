@@ -8,18 +8,31 @@ class ClientsController {
 
   async transferencia(req, res) {
     try {
-      const { value, transferAccount, destinatinAccount } = req.body
+      const { number, agency, balance, client, transactions } = req.body
 
-      const { number, agency, balance, user, transactions } = Account
+      const { value, date, transferAccount, destinatinAccount } = Transaction
 
-      const transf = await Transaction.create({
-        value,
-        transferAccount: req.userId,
-        destinatinAccount,
+      const transf = await Account.create({
+        number,
+        agency,
+        balance,
+        client,
+        transactions: req.userId,
       })
 
       await Promise.all(
         transactions.map(async transfer => {
+          if (transf.balance < value) {
+            return res
+              .status(400)
+              .json({ success: false, message: 'Saldo insuficiente.' })
+          } else if (value < 0) {
+            return res.status(400).json({
+              success: false,
+              message: 'O valor minímo de transferência é R$ 3.00',
+            })
+          }
+          balance -= value
           const newTransaction = new Transaction({
             ...transfer,
             transferAccount: transf._id,
