@@ -12,12 +12,12 @@ class ClientController {
     }
 
     const users = await User.paginate(
-      filter,
-      {},
+      // filter,
+      // {},
       {
         page: req.query.page || 1,
         limeit: 10,
-        populate: 'Account',
+        populate: ['accounts', 'Transaction'],
         sort: '-createdAt',
       }
     )

@@ -107,10 +107,11 @@ class ClientsController {
         })
 
       //validate password
-      if (!user.comparePassword(password))
+      if (!user.comparePassword(password)) {
         return res
           .status(401)
           .json({ message: 'Senha invalida, tenta novamente!' })
+      }
 
       // Make sure the user has been verified
       if (!user.isVerified)
@@ -120,7 +121,7 @@ class ClientsController {
         })
 
       // Login successful, write token, and send back user
-      res.status(200).json({ token: user.generateToken(user), user: user })
+      res.status(200).json({ token: user.generateToken(user), user })
     } catch (error) {
       res.status(500).json({ message: error.message })
     }
